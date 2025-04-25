@@ -217,7 +217,7 @@ end
     @param char: Character model to ragdoll
 ]]
 function Character.EnableRagdoll(char)
-	for _, joint in ipairs(char:GetDescendants()) do
+	for _, joint in pairs(char:GetDescendants()) do
 		if joint:IsA("Motor6D") then
 			ReplaceJoint(joint)
 		end
@@ -235,7 +235,7 @@ end
 ]]
 function Character.ScaleR15(humanoid, scale)
 	if humanoid.RigType == Enum.HumanoidRigType.R15 then
-		for _, value in ipairs(humanoid:GetChildren()) do
+		for _, value in pairs(humanoid:GetChildren()) do
 			if value:IsA("NumberValue") then
 				value.Value = scale
 			end
@@ -534,7 +534,7 @@ function ActionHandlers.orbit(player)
 	task.spawn(function()
 		local angle = 0
 		while #orbitals > 0 do
-			for i, orb in ipairs(orbitals) do
+			for i, orb in pairs(orbitals) do
 				if orb.Parent then
 					local offset = Vector3.new(
 						math.cos(angle + (i-1)*(math.pi*2/#orbitals)) * CONFIG.PHYSICS.ORBIT.RADIUS,
@@ -832,7 +832,7 @@ local startPos = CONFIG.ZONES.SPAWN.START_POS
 local spacing = CONFIG.ZONES.SPAWN.SPACING
 local columns = CONFIG.ZONES.SPAWN.COLUMNS
 
-for index, zone in ipairs(ZONE_CONFIG) do
+for index, zone in pairs(ZONE_CONFIG) do
 	local row = math.floor((index-1)/columns)
 	local column = (index-1) % columns
 	local position = startPos + Vector3.new(column*spacing, 0, row*spacing)
