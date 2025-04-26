@@ -1,5 +1,6 @@
 -- No more pairs
 -- Modifiy Services Section
+-- player: player:IsA("Player") in Util:Notify
 
 local CONFIG = {
 	DEBRIS_TIMES = {
@@ -97,7 +98,7 @@ local Util = {}
     @param message: Message content to display
 ]]
 function Util.Notify(player, message)
-	if player and player:IsDescendantOf(game.Players) then
+	if player and player:IsA("Player") and player:IsDescendantOf(game.Players) then
 		ASSETS.RemoteEvents.ServerMessage:FireClient(player, message)
 	end
 end
