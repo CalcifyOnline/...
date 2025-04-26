@@ -1,4 +1,5 @@
 -- No more pairs
+-- Modifiy Services Section
 
 local CONFIG = {
 	DEBRIS_TIMES = {
@@ -30,7 +31,7 @@ local CONFIG = {
 	SAFETY = {
 		SCALE_RANGE = {0.1, 10},
 		FOLLOWER_LIMIT = 20,
-		AGE_RANGE = {0, 10000}
+		MONEY_RANGE = {0, 10000}
 	},
 
 	TIME_WARP = {
@@ -58,24 +59,31 @@ local CONFIG = {
 	}
 }
 
----------------------------------------------------------------------------------------------------
--- SERVICE MANAGEMENT
--- Centralized access to game services and created instances
----------------------------------------------------------------------------------------------------
 local SERVICES = {
 	Debris = game:GetService("Debris"),
-	DataStore = game:GetService("DataStoreService"),
-	Tween = game:GetService("TweenService"),
-	Pathfinding = game:GetService("PathfindingService"),
-	Remote = game.ReplicatedStorage:WaitForChild("RemoteEvents"),
-	MainStore = game:GetService("DataStoreService"):GetDataStore("Main"),
-	RunService = game:GetService("RunService"),
-	WaveAnim = Instance.new("Animation")
+	DataStoreService = game:GetService("DataStoreService"),
+	TweenService = game:GetService("TweenService"),
+	PathfindingService = game:GetService("PathfindingService"),
+	RunService = game:GetService("RunService")
 }
 
--- Configure wave animation
-SERVICES.WaveAnim.AnimationId = "rbxassetid://507770239"
-SERVICES.WaveAnim.Parent = workspace
+-- Non-service assets and created instances
+local ASSETS = {
+	WaveAnimation = Instance.new("Animation"),
+	RemoteEvents = {
+		ServerMessage = game.ReplicatedStorage:WaitForChild("RemoteEvents").ServerMessage
+	}
+}
+
+-- DataStore configurations
+local DATASTORES = {
+	Main = SERVICES.DataStoreService:GetDataStore("Main")
+}
+
+-- Configure animation asset
+ASSETS.WaveAnimation.AnimationId = "rbxassetid://507770239"
+ASSETS.WaveAnimation.Parent = workspace
+
 
 ---------------------------------------------------------------------------------------------------
 -- UTILITY MODULE
@@ -90,7 +98,7 @@ local Util = {}
 ]]
 function Util.Notify(player, message)
 	if player and player:IsDescendantOf(game.Players) then
-		SERVICES.Remote.ServerMessage:FireClient(player, message)
+		ASSETS.RemoteEvents.ServerMessage:FireClient(player, message)
 	end
 end
 
@@ -179,7 +187,7 @@ function Physics.CreateShockwave(position)
 		Transparency = 0.5
 	})
 
-	SERVICES.Tween:Create(shockwave, TweenInfo.new(CONFIG.DEBRIS_TIMES.SHOCKWAVE), {
+	SERVICES.TweenService:Create(shockwave, TweenInfo.new(CONFIG.DEBRIS_TIMES.SHOCKWAVE), {
 		Size = Vector3.new(200, 200, 200),
 		Transparency = 1
 	}):Play()
@@ -311,7 +319,7 @@ end
     @param player: Player executing command
 ]]
 function ActionHandlers.savelast(player)
-	SERVICES.MainStore:SetAsync("LastVisitor", player.Name)
+	DATASTORES.Main:SetAsync("LastVisitor", player.Name)
 	Util.Notify(player, "Saved as last visitor!")
 end
 
@@ -320,7 +328,7 @@ end
     @param player: Player executing command
 ]]
 function ActionHandlers.displaylast(player)
-	local last = SERVICES.MainStore:GetAsync("LastVisitor") or "None"
+	local last = DATASTORES.Main:GetAsync("LastVisitor") or "None"
 	Util.Notify(player, "Last visitor: "..last)
 end
 
@@ -628,7 +636,7 @@ function ActionHandlers.moneymeta(player, arg)
 	local data = setmetatable({}, {__index = {Money = 10}})
 	Util.Notify(player, "Initial Money: "..data.Money)
 
-	local valid, value = Util.ValidateNumber(arg, unpack(CONFIG.SAFETY.AGE_RANGE))
+	local valid, value = Util.ValidateNumber(arg, unpack(CONFIG.SAFETY.MONEY_RANGE))
 	if valid then
 		data.Money = value
 		Util.Notify(player, "New Money: "..value)
@@ -645,7 +653,7 @@ function ActionHandlers.wraptime(player)
 	blur.Size = 15
 	blur.Parent = game.Lighting
 
-	SERVICES.Tween:Create(blur, TweenInfo.new(5), {Size = 0}):Play()
+	SERVICES.TweenService:Create(blur, TweenInfo.new(5), {Size = 0}):Play()
 
 	local humanoid = player.Character.Humanoid
 	humanoid.JumpPower = 75
@@ -722,7 +730,7 @@ function ZoneSystem.CreateZone(zoneConfig, position)
 			if part:FindFirstChild("BillboardGui") then
 				part.BillboardGui:Destroy()
 			end
-			SERVICES.Tween:Create(part, TweenInfo.new(0.3), {Color = originalColor}):Play()
+			SERVICES.TweenService:Create(part, TweenInfo.new(0.3), {Color = originalColor}):Play()
 			activePlayers[player] = nil
 		end
 	end
@@ -771,7 +779,7 @@ function ZoneSystem.CreateZone(zoneConfig, position)
 						local handler = ActionHandlers[zoneConfig.Action]
 						if handler then
 							part.Color = Color3.fromRGB(math.random(0,255), math.random(0,255), math.random(0,255))
-							SERVICES.Tween:Create(part, TweenInfo.new(0.5), {Color = originalColor}):Play()
+							SERVICES.TweenService:Create(part, TweenInfo.new(0.5), {Color = originalColor}):Play()
 
 							if zoneConfig.Args then
 								handler(player, zoneConfig.Args)
