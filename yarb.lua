@@ -5,6 +5,8 @@
 -- Type Cheaking
 -- Type Cheaking for returned value from functions
 -- Stop Using "Any" Data Type
+-- Using Pcall with DataStore
+
 
 type ZoneActionArgs = number | string | nil
 
@@ -406,18 +408,36 @@ end
     Data saving handler
     @param player: Player executing command
 ]]
-function ActionHandlers.savelast(player : Player) : ()
-	DATASTORES.Main:SetAsync("LastVisitor", player.Name)
-	Util.Notify(player, "Saved as last visitor!")
+function ActionHandlers.savelast(player: Player): ()
+	local success, errorMessage = pcall(function()
+		DATASTORES.Main:SetAsync("LastVisitor", player.Name)
+	end)
+
+	if success then
+		Util.Notify(player, "Saved as last visitor!")
+	else
+		warn("DataStore save failed:", errorMessage)
+		Util.Notify(player, "Failed to save data. Please try again later.")
+	end
 end
 
 --[[
     Data retrieval handler
     @param player: Player executing command
 ]]
-function ActionHandlers.displaylast(player : Player) : ()
-	local last = DATASTORES.Main:GetAsync("LastVisitor") or "None"
-	Util.Notify(player, "Last visitor: "..last)
+function ActionHandlers.displaylast(player: Player): ()
+	local success, result = pcall(function()
+		return DATASTORES.Main:GetAsync("LastVisitor")
+	end)
+
+	local last = "None"
+	if success then
+		last = result or "None"  -- Handle nil case explicitly
+		Util.Notify(player, "Last visitor: "..last)
+	else
+		warn("DataStore load failed:", result)
+		Util.Notify(player, "Failed to load data. Last visitor: "..last)
+	end
 end
 
 --[[
