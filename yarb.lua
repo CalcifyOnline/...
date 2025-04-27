@@ -3,6 +3,7 @@
 -- player: player:IsA("Player") in Util:Notify
 -- Stop Using Game.AnyService
 -- Type Cheaking
+-- Type Cheaking for returned value from functions
 
 type CreatePartProps = {
 	Size: Vector3?,
@@ -180,7 +181,7 @@ local Util = {}
     @param player: Target player instance
     @param message: Message content to display
 ]]
-function Util.Notify(player : Player, message : string)
+function Util.Notify(player : Player, message : string) : ()
 	if player and player:IsA("Player") and player:IsDescendantOf(SERVICES.Players) then
 		ASSETS.RemoteEvents.ServerMessage:FireClient(player, message)
 	end
@@ -193,7 +194,7 @@ end
     @param max: Maximum allowed value (optional)
     @return: (valid: boolean, value: number)
 ]]
-function Util.ValidateNumber(input : number, min : number, max : number)
+function Util.ValidateNumber(input : number, min : number, max : number) : (boolean, number)
 	local num = tonumber(input)
 	local valid = num ~= nil
 	if min then valid = valid and (num >= min) end
@@ -207,7 +208,7 @@ end
     @param props: Table of part properties
     @return: Created Part instance
 ]]
-function Util.CreatePart(position : CFrame, props)
+function Util.CreatePart(position : CFrame, props) : (Part)
 	local part = Instance.new("Part")
 	part.CFrame = position
 	part.Size = props.Size or Vector3.new(5, 5, 5)
@@ -233,7 +234,7 @@ local Physics = {}
     @param direction: Vector3 movement direction
     @param duration: Effect duration in seconds
 ]]
-function Physics.ApplyVelocity(target : Part, attachment : Attachment, direction : Vector3, duration : number)
+function Physics.ApplyVelocity(target : Part, attachment : Attachment, direction : Vector3, duration : number) : ()
 	local velocity = Instance.new("LinearVelocity")
 	velocity.Attachment0 = attachment
 	velocity.VectorVelocity = direction
@@ -247,7 +248,7 @@ end
     @param position: World position for explosion
     @return: Created Explosion instance
 ]]
-function Physics.CreateExplosion(position : Vector3)
+function Physics.CreateExplosion(position : Vector3) : (Explosion)
 	local explosion = Instance.new("Explosion")
 	explosion.Position = position
 	explosion.BlastRadius = 15
@@ -261,7 +262,7 @@ end
     @param position: Center position for shockwave
     @return: Shockwave part instance
 ]]
-function Physics.CreateShockwave(position : Vector3)
+function Physics.CreateShockwave(position : Vector3) : (Part)
 	local shockwave = Util.CreatePart(CFrame.new(position), {
 		Size = Vector3.new(0, 0, 0),
 		Color = Color3.new(1, 1, 1),
@@ -289,7 +290,7 @@ local Character = {}
     Replace motor joint with physics constraint
     @param joint: Motor6D joint to replace
 ]]
-local function ReplaceJoint(joint : JointInstance)
+local function ReplaceJoint(joint : JointInstance) : ()
 	local att0 = Instance.new("Attachment")
 	local att1 = Instance.new("Attachment")
 	att0.CFrame = joint.C0
@@ -310,7 +311,7 @@ end
     Enable ragdoll physics on character
     @param char: Character model to ragdoll
 ]]
-function Character.EnableRagdoll(char : Model)
+function Character.EnableRagdoll(char : Model) : ()
 	for _, joint in char:GetDescendants() do
 		if joint:IsA("Motor6D") then
 			ReplaceJoint(joint)
@@ -327,7 +328,7 @@ end
     @param humanoid: Humanoid to scale
     @param scale: Scaling factor to apply
 ]]
-function Character.ScaleR15(humanoid : Humanoid, scale : number)
+function Character.ScaleR15(humanoid : Humanoid, scale : number) : ()
 	if humanoid.RigType == Enum.HumanoidRigType.R15 then
 		for _, value in humanoid:GetChildren() do
 			if value:IsA("NumberValue") then
@@ -347,7 +348,7 @@ local ActionHandlers = {}
     Instant death command handler
     @param player: Player executing command
 ]]
-function ActionHandlers.die(player : Player)
+function ActionHandlers.die(player : Player) : ()
 	player.Character.Humanoid.Health = 0
 end
 
@@ -356,7 +357,7 @@ end
     @param player: Player executing command
     @param arg: Requested gravity value
 ]]
-function ActionHandlers.grav(player : Player, arg : number)
+function ActionHandlers.grav(player : Player, arg : number) : ()
 	local valid, value = Util.ValidateNumber(arg, 1)
 	if valid then
 		workspace.Gravity = value
@@ -369,7 +370,7 @@ end
     @param player: Player executing command
     @param arg: Teleportation range
 ]]
-function ActionHandlers.teleport(player : Player, arg : number)
+function ActionHandlers.teleport(player : Player, arg : number) : ()
 	local valid, range = Util.ValidateNumber(arg, 1)
 	if valid then
 		local offset = Vector3.new(math.random(-range, range), 0, math.random(-range, range))
@@ -381,7 +382,7 @@ end
     Speed boost handler
     @param player: Player executing command
 ]]
-function ActionHandlers.run(player : Player)
+function ActionHandlers.run(player : Player) : ()
 	local root = player.Character.HumanoidRootPart
 	Physics.ApplyVelocity(root, root.RootAttachment, root.CFrame.LookVector * 40, CONFIG.DEBRIS_TIMES.VELOCITY)
 end
@@ -390,7 +391,7 @@ end
     Random part creation handler
     @param player: Player executing command
 ]]
-function ActionHandlers.part(player : Player)
+function ActionHandlers.part(player : Player) : ()
 	local lookDirection = player.Character.HumanoidRootPart.CFrame.LookVector
 	Util.CreatePart(player.Character.HumanoidRootPart.CFrame + (lookDirection * 10) + Vector3.new(0, 2, 0), {
 		Color = Color3.fromRGB(math.random(255), math.random(255), math.random(255)),
@@ -402,7 +403,7 @@ end
     Data saving handler
     @param player: Player executing command
 ]]
-function ActionHandlers.savelast(player : Player)
+function ActionHandlers.savelast(player : Player) : ()
 	DATASTORES.Main:SetAsync("LastVisitor", player.Name)
 	Util.Notify(player, "Saved as last visitor!")
 end
@@ -411,7 +412,7 @@ end
     Data retrieval handler
     @param player: Player executing command
 ]]
-function ActionHandlers.displaylast(player : Player)
+function ActionHandlers.displaylast(player : Player) : ()
 	local last = DATASTORES.Main:GetAsync("LastVisitor") or "None"
 	Util.Notify(player, "Last visitor: "..last)
 end
@@ -420,7 +421,7 @@ end
     Animation playback handler
     @param player: Player executing command
 ]]
-function ActionHandlers.wave(player : Player)
+function ActionHandlers.wave(player : Player) : ()
 	local animator = player.Character.Humanoid.Animator
 	local animation = animator:LoadAnimation(SERVICES.WaveAnim)
 	animation:Play()
@@ -432,7 +433,7 @@ end
     Ragdoll activation handler
     @param player: Player executing command
 ]]
-function ActionHandlers.ragdoll(player : Player)
+function ActionHandlers.ragdoll(player : Player) : ()
 	Character.EnableRagdoll(player.Character)
 end
 
@@ -440,7 +441,7 @@ end
     Gravity inversion handler
     @param player: Player executing command
 ]]
-function ActionHandlers.gravity_swap(player : Player)
+function ActionHandlers.gravity_swap(player : Player) : ()
 	local humanoid = player.Character.Humanoid
 	local root = player.Character.HumanoidRootPart
 
@@ -467,7 +468,7 @@ end
     Elemental power activation handler
     @param player: Player executing command
 ]]
-function ActionHandlers.elemental_power(player : Player)
+function ActionHandlers.elemental_power(player : Player) : ()
 	local elements = {"fire", "ice", "lightning"}
 	local chosenElement = elements[math.random(3)]
 	local humanoid = player.Character.Humanoid
@@ -527,7 +528,7 @@ end
     Time warp effect handler
     @param player: Player executing command
 ]]
-function ActionHandlers.time_warp(player : Player)
+function ActionHandlers.time_warp(player : Player) : ()
 	if not player.Character then return end
 	local humanoidRoot = player.Character:FindFirstChild("HumanoidRootPart")
 	if not humanoidRoot then return end
@@ -569,8 +570,8 @@ end
 --[[
     Meteor shower handler
 ]]
-function ActionHandlers.meteor()
-	local function CreateMeteor()
+function ActionHandlers.meteor() : ()
+	local function CreateMeteor() : ()
 		local meteor = Util.CreatePart(CFrame.new(math.random(-250, 250), 200, math.random(-250, 250)), {
 			Color = Color3.fromRGB(255, 149, 0),
 			Anchored = false
@@ -597,7 +598,7 @@ end
     Orbital effect handler
     @param player: Player executing command
 ]]
-function ActionHandlers.orbit(player : Player)
+function ActionHandlers.orbit(player : Player) : ()
 	local root = player.Character.HumanoidRootPart
 	local orbitals = {}
 
@@ -649,7 +650,7 @@ end
     @param player: Player executing command
     @param arg: Time preset name
 ]]
-function ActionHandlers.settime(player : Player, arg : string)
+function ActionHandlers.settime(player : Player, arg : string) : ()
 	if CONFIG.TIME_MAP[arg] then
 		SERVICES.Lighting.TimeOfDay = CONFIG.TIME_MAP[arg]
 		Util.Notify(player, "Time: "..arg)
@@ -661,7 +662,7 @@ end
     @param player: Player executing command
     @param arg: Scaling factor
 ]]
-function ActionHandlers.size(player : Player, arg : number)
+function ActionHandlers.size(player : Player, arg : number) : ()
 	local valid, value = Util.ValidateNumber(arg, unpack(CONFIG.SAFETY.SCALE_RANGE))
 	if valid then
 		Character.ScaleR15(player.Character.Humanoid, value)
@@ -674,7 +675,7 @@ end
     @param player: Player executing command
     @param arg: Number of followers to create
 ]]
-function ActionHandlers.followers(player : Player, arg : number)
+function ActionHandlers.followers(player : Player, arg : number) : ()
 	local valid, count = Util.ValidateNumber(arg, 1, CONFIG.SAFETY.FOLLOWER_LIMIT)
 	if not valid then return end
 
@@ -685,7 +686,7 @@ function ActionHandlers.followers(player : Player, arg : number)
 		return npc
 	end
 
-	local function SetupFollowerAI(npc : Model, player : Player)
+	local function SetupFollowerAI(npc : Model, player : Player) : ()
 		npc.Humanoid.Touched:Connect(function(hit)
 			if hit.Parent:FindFirstChild("Humanoid") then
 				hit.Parent.Humanoid:TakeDamage(100)
@@ -716,7 +717,7 @@ end
     @param player: Player executing command
     @param arg: Money value to set
 ]]
-function ActionHandlers.moneymeta(player : Player, arg : number)
+function ActionHandlers.moneymeta(player : Player, arg : number) : ()
 	local data = setmetatable({}, {__index = {Money = 10}})
 	Util.Notify(player, "Initial Money: "..data.Money)
 
@@ -731,7 +732,7 @@ end
     Shockwave effect handler
     @param player: Player executing command
 ]]
-function ActionHandlers.wraptime(player : Player)
+function ActionHandlers.wraptime(player : Player) : ()
 	local shockwave = Physics.CreateShockwave(player.Character.HumanoidRootPart.Position)
 	local blur = Instance.new("BlurEffect")
 	blur.Size = 15
@@ -764,7 +765,7 @@ local ZoneSystem = {}
     @param part: Zone part to label
     @param text: Display text
 ]]
-local function CreateZoneLabel(part : Part, text : string)
+local function CreateZoneLabel(part : Part, text : string) : ()
 	local billboard = Instance.new("BillboardGui")
 	billboard.Adornee = part
 	billboard.Size = UDim2.new(4, 0, 1.5, 0)
@@ -791,7 +792,7 @@ end
     @param zoneConfig: Zone configuration table
     @param position: World position for zone
 ]]
-function ZoneSystem.CreateZone(zoneConfig : ZoneConfig, position : Vector3)
+function ZoneSystem.CreateZone(zoneConfig : ZoneConfig, position : Vector3) : ()
 	local part = Util.CreatePart(CFrame.new(position), {
 		Size = Vector3.new(10, 2, 10),
 		Color = zoneConfig.Color,
