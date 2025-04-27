@@ -4,6 +4,9 @@
 -- Stop Using Game.AnyService
 -- Type Cheaking
 -- Type Cheaking for returned value from functions
+-- Stop Using "Any" Data Type
+
+type ZoneActionArgs = number | string | nil
 
 type CreatePartProps = {
 	Size: Vector3?,
@@ -19,7 +22,7 @@ type ZoneConfig = {
 	Name: string,
 	Action: string,
 	Color: Color3,
-	Args: any?
+	Args: ZoneActionArgs  
 }
 
 type DebrisTimes = {
@@ -867,7 +870,11 @@ function ZoneSystem.CreateZone(zoneConfig : ZoneConfig, position : Vector3) : ()
 							SERVICES.TweenService:Create(part, TweenInfo.new(0.5), {Color = originalColor}):Play()
 
 							if zoneConfig.Args then
-								handler(player, zoneConfig.Args)
+								if typeof(zoneConfig.Args) == "number" then
+									handler(player, zoneConfig.Args :: number)
+								elseif typeof(zoneConfig.Args) == "string" then
+									handler(player, zoneConfig.Args :: string)
+								end
 							else
 								handler(player)
 							end
@@ -892,33 +899,33 @@ end
 -- Create all configured interactive zones in the game world
 ---------------------------------------------------------------------------------------------------
 local ZONE_CONFIG = {
-	{Name = "Die Zone", Action = "die", Color = Color3.new(1,0,0)},
-	{Name = "Grav Zone 10", Action = "grav", Args = 10, Color = Color3.new(0,1,0)},
-	{Name = "Teleport Zone 200", Action = "teleport", Args = 200, Color = Color3.new(0,0,1)},
-	{Name = "Run Zone", Action = "run", Color = Color3.new(1,1,0)},
-	{Name = "Part Zone", Action = "part", Color = Color3.new(1,0,1)},
-	{Name = "SaveLast Zone", Action = "savelast", Color = Color3.new(0,1,1)},
-	{Name = "DisplayLast Zone", Action = "displaylast", Color = Color3.new(0.5,0.5,0.5)},
-	{Name = "Wave Zone", Action = "wave", Color = Color3.new(0.5,0,0.5)},
-	{Name = "Ragdoll Zone (DON'T TOUCH IT)", Action = "ragdoll", Color = Color3.new(0,0.5,0)},
-	{Name = "Meteor Zone", Action = "meteor", Color = Color3.new(1,0.5,0)},
-	{Name = "Orbit Zone", Action = "orbit", Color = Color3.new(0,0.5,0.5)},
-	{Name = "Size Zone 3", Action = "size", Args = 3, Color = Color3.new(0.5,0,0)},
-	{Name = "Followers Zone 10", Action = "followers", Args = 10, Color = Color3.new(0.3,0.3,0.3)},
-	{Name = "Moneymeta Zone 120", Action = "moneymeta", Args = 25, Color = Color3.new(0.8,0.2,0.2)},
-	{Name = "Wraptime Zone", Action = "wraptime", Color = Color3.new(0.2,0.8,0.2)},
-	{Name = "Gravity Swap", Action = "gravity_swap", Color = Color3.fromRGB(100, 200, 255)},
-	{Name = "Elemental Power", Action = "elemental_power", Color = Color3.fromRGB(200, 50, 150)},
-	{Name = "Time Warp", Action = "time_warp", Color = Color3.fromRGB(50, 50, 100)}
+	{Name = "Die Zone", Action = "die", Color = Color3.new(1,0,0), Args = nil},
+	{Name = "Grav Zone 10", Action = "grav", Color = Color3.new(0,1,0), Args = 10},
+	{Name = "Teleport Zone 200", Action = "teleport", Color = Color3.new(0,0,1), Args = 200},
+	{Name = "Run Zone", Action = "run", Color = Color3.new(1,1,0), Args = nil},
+	{Name = "Part Zone", Action = "part", Color = Color3.new(1,0,1), Args = nil},
+	{Name = "SaveLast Zone", Action = "savelast", Color = Color3.new(0,1,1), Args = nil},
+	{Name = "DisplayLast Zone", Action = "displaylast", Color = Color3.new(0.5,0.5,0.5), Args = nil},
+	{Name = "Wave Zone", Action = "wave", Color = Color3.new(0.5,0,0.5), Args = nil},
+	{Name = "Ragdoll Zone (DON'T TOUCH IT)", Action = "ragdoll", Color = Color3.new(0,0.5,0), Args = nil},
+	{Name = "Meteor Zone", Action = "meteor", Color = Color3.new(1,0.5,0), Args = nil},
+	{Name = "Orbit Zone", Action = "orbit", Color = Color3.new(0,0.5,0.5), Args = nil},
+	{Name = "Size Zone 3", Action = "size", Color = Color3.new(0.5,0,0), Args = 3},
+	{Name = "Followers Zone 10", Action = "followers", Color = Color3.new(0.3,0.3,0.3), Args = 10},
+	{Name = "Moneymeta Zone 120", Action = "moneymeta", Color = Color3.new(0.8,0.2,0.2), Args = 25},
+	{Name = "Wraptime Zone", Action = "wraptime", Color = Color3.new(0.2,0.8,0.2), Args = nil},
+	{Name = "Gravity Swap", Action = "gravity_swap", Color = Color3.fromRGB(100, 200, 255), Args = nil},
+	{Name = "Elemental Power", Action = "elemental_power", Color = Color3.fromRGB(200, 50, 150), Args = nil},
+	{Name = "Time Warp", Action = "time_warp", Color = Color3.fromRGB(50, 50, 100), Args = nil}
 }
 
 -- Add time zones dynamically
-for timeName in CONFIG.TIME_MAP do
+for timeName: string, _ in CONFIG.TIME_MAP do
 	table.insert(ZONE_CONFIG, {
 		Name = "Time: "..timeName,
 		Action = "settime",
-		Args = timeName,
-		Color = Color3.new(0.2,0.2,0.8)
+		Color = Color3.new(0.2,0.2,0.8),
+		Args = timeName
 	})
 end
 
