@@ -6,7 +6,7 @@
 -- Type Cheaking for returned value from functions
 -- Stop Using "Any" Data Type
 -- Using Pcall with DataStore
-
+-- Using Pcall With ComputeAsync
 
 type ZoneActionArgs = number | string | nil
 
@@ -717,9 +717,18 @@ function ActionHandlers.followers(player : Player, arg : number) : ()
 		end)
 
 		task.spawn(function()
-			local path = SERVICES.Pathfinding:CreatePath()
+			local path = SERVICES.PathfindingService:CreatePath()
 			while npc.Parent and player.Character do
-				path:ComputeAsync(npc.HumanoidRootPart.Position, player.Character.HumanoidRootPart.Position)
+				
+				
+				local success, result = pcall(function()
+					return path:ComputeAsync(npc.HumanoidRootPart.Position, player.Character.HumanoidRootPart.Position)
+				end)
+
+				if not success then
+					return
+				end
+				
 				local waypoints = path:GetWaypoints()
 				local targetPos = waypoints[3] and waypoints[3].Position or player.Character.HumanoidRootPart.Position
 				npc.Humanoid:MoveTo(targetPos)
