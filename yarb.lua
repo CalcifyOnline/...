@@ -1,6 +1,7 @@
 -- No more pairs
 -- Modifiy Services Section
 -- player: player:IsA("Player") in Util:Notify
+-- Stop Using Game.AnyService
 
 local CONFIG = {
 	DEBRIS_TIMES = {
@@ -65,14 +66,17 @@ local SERVICES = {
 	DataStoreService = game:GetService("DataStoreService"),
 	TweenService = game:GetService("TweenService"),
 	PathfindingService = game:GetService("PathfindingService"),
-	RunService = game:GetService("RunService")
+	RunService = game:GetService("RunService"),
+	ReplicatedStorage = game:GetService("ReplicatedStorage"),
+	Players = game:GetService("Players"),
+	Lighting = game:GetService("Lighting")
 }
 
 -- Non-service assets and created instances
 local ASSETS = {
 	WaveAnimation = Instance.new("Animation"),
 	RemoteEvents = {
-		ServerMessage = game.ReplicatedStorage:WaitForChild("RemoteEvents").ServerMessage
+		ServerMessage = SERVICES.ReplicatedStorage:WaitForChild("RemoteEvents").ServerMessage
 	}
 }
 
@@ -98,7 +102,7 @@ local Util = {}
     @param message: Message content to display
 ]]
 function Util.Notify(player, message)
-	if player and player:IsA("Player") and player:IsDescendantOf(game.Players) then
+	if player and player:IsA("Player") and player:IsDescendantOf(SERVICES.Players) then
 		ASSETS.RemoteEvents.ServerMessage:FireClient(player, message)
 	end
 end
@@ -234,7 +238,7 @@ function Character.EnableRagdoll(char)
 		end
 	end
 	SERVICES.Remote.SetHumanState:FireClient(
-		game.Players:GetPlayerFromCharacter(char),
+		SERVICES.Players:GetPlayerFromCharacter(char),
 		Enum.HumanoidStateType.Physics
 	)
 end
@@ -450,12 +454,12 @@ function ActionHandlers.time_warp(player)
 	if not humanoidRoot then return end
 
 	local originalGravity = workspace.Gravity
-	local originalClock = game.Lighting.ClockTime
-	local originalBrightness = game.Lighting.Brightness
+	local originalClock = SERVICES.Lighting.ClockTime
+	local originalBrightness = SERVICES.Lighting.Brightness
 
 	local timeDistortion = Instance.new("BlurEffect")
 	timeDistortion.Size = 24
-	timeDistortion.Parent = game.Lighting
+	timeDistortion.Parent = SERVICES.Lighting
 	SERVICES.Debris:AddItem(timeDistortion, CONFIG.TIME_WARP.DURATION + 1)
 
 	local timeParticles = Instance.new("ParticleEmitter")
@@ -468,15 +472,15 @@ function ActionHandlers.time_warp(player)
 	local connection
 	connection = SERVICES.RunService.Heartbeat:Connect(function()
 		workspace.Gravity = originalGravity * 0.5
-		game.Lighting.ClockTime = 25
-		game.Lighting.Brightness = 0.3
+		SERVICES.Lighting.ClockTime = 25
+		SERVICES.Lighting.Brightness = 0.3
 	end)
 
 	task.delay(CONFIG.TIME_WARP.DURATION, function()
 		if connection then connection:Disconnect() end
 		workspace.Gravity = originalGravity
-		game.Lighting.ClockTime = originalClock
-		game.Lighting.Brightness = originalBrightness
+		SERVICES.Lighting.ClockTime = originalClock
+		SERVICES.Lighting.Brightness = originalBrightness
 		timeDistortion = nil
 		timeParticles = nil
 		connection = nil
@@ -568,7 +572,7 @@ end
 ]]
 function ActionHandlers.settime(player, arg)
 	if CONFIG.TIME_MAP[arg] then
-		game.Lighting.TimeOfDay = CONFIG.TIME_MAP[arg]
+		SERVICES.Lighting.TimeOfDay = CONFIG.TIME_MAP[arg]
 		Util.Notify(player, "Time: "..arg)
 	end
 end
@@ -596,7 +600,7 @@ function ActionHandlers.followers(player, arg)
 	if not valid then return end
 
 	local function CreateFollower()
-		local npc = game.Players:CreateHumanoidModelFromUserId(26266254)
+		local npc = SERVICES.Players:CreateHumanoidModelFromUserId(26266254)
 		npc:PivotTo(CFrame.new(math.random(-250, 250), 0, math.random(-250, 250)))
 		npc.Parent = workspace
 		return npc
@@ -652,7 +656,7 @@ function ActionHandlers.wraptime(player)
 	local shockwave = Physics.CreateShockwave(player.Character.HumanoidRootPart.Position)
 	local blur = Instance.new("BlurEffect")
 	blur.Size = 15
-	blur.Parent = game.Lighting
+	blur.Parent = SERVICES.Lighting
 
 	SERVICES.TweenService:Create(blur, TweenInfo.new(5), {Size = 0}):Play()
 
@@ -737,7 +741,7 @@ function ZoneSystem.CreateZone(zoneConfig, position)
 	end
 
 	part.Touched:Connect(function(hit)
-		local player = game.Players:GetPlayerFromCharacter(hit.Parent)
+		local player = SERVICES.Players:GetPlayerFromCharacter(hit.Parent)
 		if player and player.Character and not activePlayers[player] then
 			local humanoidRoot = player.Character:FindFirstChild("HumanoidRootPart")
 			if humanoidRoot then
@@ -796,11 +800,11 @@ function ZoneSystem.CreateZone(zoneConfig, position)
 	end)
 
 	part.TouchEnded:Connect(function(hit)
-		local player = game.Players:GetPlayerFromCharacter(hit.Parent)
+		local player = SERVICES.Players:GetPlayerFromCharacter(hit.Parent)
 		CleanupPlayer(player)
 	end)
 
-	game.Players.PlayerRemoving:Connect(CleanupPlayer)
+	SERVICES.Players.PlayerRemoving:Connect(CleanupPlayer)
 end
 
 ---------------------------------------------------------------------------------------------------
